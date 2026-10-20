@@ -94,6 +94,37 @@ class SubmissionTests(unittest.TestCase):
         self.assertEqual(result.stdout.strip(), "12345")
         self.assertNotIn("--test-only", (self.root / "capture").read_text().splitlines())
 
+    def test_evaluation_preview_does_not_submit_or_change_training(self):
+        checkpoint = self.root / "trained/weights_epoch_20.pt"
+        checkpoint.parent.mkdir()
+        checkpoint.touch()
+        (checkpoint.parent / "config.json").write_text("{}")
+        (self.root / "repo/eval_pusht_suite.py").touch()
+        self.env.update({"FLOWJEPA_EVAL_CHECKPOINT": bash_path(checkpoint),
+                         "FLOWJEPA_EVAL_ID": "flowjepa-eval-boundary"})
+        result = subprocess.run([BASH, bash_path(ROOT / "scripts/circe_eval_submit.sh"), "smoke"],
+                                env=self.env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("eval_pusht_suite.py", result.stderr)
+        self.assertIn("flowjepa-eval-boundary-smoke", result.stderr)
+        self.assertFalse((self.root / "capture").exists())
+        self.assertFalse((self.root / "runs").exists())
+
+    def test_evaluation_existing_output_is_rejected(self):
+        checkpoint = self.root / "trained/weights_epoch_20.pt"
+        checkpoint.parent.mkdir()
+        checkpoint.touch()
+        (checkpoint.parent / "config.json").write_text("{}")
+        (self.root / "repo/eval_pusht_suite.py").touch()
+        (self.root / "runs/evaluations/flowjepa-eval-boundary").mkdir(parents=True)
+        self.env.update({"FLOWJEPA_EVAL_CHECKPOINT": bash_path(checkpoint),
+                         "FLOWJEPA_EVAL_ID": "flowjepa-eval-boundary",
+                         "FLOWJEPA_EVAL_TIME": "01:00:00"})
+        result = subprocess.run([BASH, bash_path(ROOT / "scripts/circe_eval_submit.sh"), "full", "--submit"],
+                                env=self.env, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.root / "capture").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

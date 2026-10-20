@@ -1,0 +1,18 @@
+defaults:
+  - pusht
+  - _self_
+
+# One frozen checkpoint evaluated under three visual deployment conditions.
+policy: ???
+cache_dir: ${oc.env:LOCAL_DATASET_DIR}
+suite:
+  conditions: [default, red_t, salt_pepper]
+  red_t_rgb: [255, 0, 0]
+  salt_pepper:
+    amount: 0.05
+    salt_fraction: 0.5
+    seed: ${seed}
+
+output:
+  dir: ??? # fresh directory; refuses to overwrite an existing experiment
+  save_video: true

@@ -1,5 +1,7 @@
 # Flow-JEPA + PushT: CIRCE 운영 절차
 
+학습 후 기본/Red T/Salt-and-pepper 세 조건 배포 평가는 [PUSHT_DEPLOYMENT.md](PUSHT_DEPLOYMENT.md)를 참고하세요.
+
 AdaJEPA와 별도 실험입니다. 기존 AdaJEPA 저장소, 환경, 데이터, 체크포인트,
 W&B run은 참조하거나 수정하지 않습니다. CIRCE에는 아직 설치하지 않았으며,
 이 문서의 서버 경로는 로그인 후 정해야 합니다. 전체 학습을 제출하지 않았습니다.
