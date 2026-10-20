@@ -14,6 +14,26 @@ from module import SIGReg
 from utils import get_column_normalizer, get_img_preprocessor, SaveCkptCallback
 
 
+def configure_windows_signal_logging():
+    """Handle stable-pretraining 0.1.8's POSIX-only signal diagnostics."""
+    if os.name != "nt":
+        return
+    import importlib
+    import signal
+
+    manager_module = importlib.import_module("stable_pretraining.manager")
+
+    def print_signal_info(label="current"):
+        manager_module.log_header(f"SignalHandlers ({label})")
+        for name in ("SIGUSR1", "SIGUSR2", "SIGCONT", "SIGTERM"):
+            sig = getattr(signal, name, None)
+            if sig is not None:
+                handler = manager_module._describe_handler(signal.getsignal(sig))
+                manager_module.logging.info(f"  {name:<8}: {handler}")
+
+    manager_module.print_signal_info = print_signal_info
+
+
 def initialize_visual_encoder_from_checkpoint(
     model,
     checkpoint,
@@ -109,6 +129,20 @@ def flow_jepa_forward(self, batch, stage, cfg):
 
 @hydra.main(version_base=None, config_path="./config/train", config_name="fjepa")
 def run(cfg):
+    configure_windows_signal_logging()
+    pl.seed_everything(cfg.seed, workers=True)
+    checkpoint_cfg = cfg.get("checkpoint", {})
+    resume_checkpoint = checkpoint_cfg.get("resume")
+    if resume_checkpoint:
+        resume_checkpoint = Path(str(resume_checkpoint)).expanduser()
+        if (not resume_checkpoint.is_absolute()
+                or resume_checkpoint.suffix != ".ckpt"
+                or not resume_checkpoint.is_file()):
+            raise ValueError("checkpoint.resume must be an existing absolute .ckpt path")
+    checkpoint_steps = int(checkpoint_cfg.get("every_n_steps", 0))
+    if checkpoint_steps < 0:
+        raise ValueError("checkpoint.every_n_steps must be nonnegative")
+    spt.set(requeue_checkpoint_every_n_steps=checkpoint_steps)
     #########################
     ##       dataset       ##
     #########################
@@ -234,11 +268,16 @@ def run(cfg):
     )
 
     ckpt_path = run_dir / f"{cfg.output_model_name}_weights.ckpt"
+    if resume_checkpoint is not None:
+        ckpt_path = resume_checkpoint
     manager = spt.Manager(
+        seed=cfg.seed,
         trainer=trainer,
         module=world_model,
         data=data_module,
         ckpt_path=ckpt_path if ckpt_path.exists() else None,
+        # Full training restore; .pt exports are for inference/initialization.
+        weights_only=False,
     )
 
     manager()

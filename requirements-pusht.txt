@@ -1,0 +1,9 @@
+torch==2.6.0
+torchvision==0.21.0
+stable-worldmodel[train,format]==0.1.1
+stable-pretraining==0.1.8
+transformers<5
+pymunk
+pygame
+shapely
+scikit-learn

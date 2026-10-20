@@ -10,6 +10,9 @@ subdir: ${hydra:job.id}
 num_workers: 6
 train_split: 0.9
 seed: 3072
+checkpoint:
+  resume: null # absolute path to a trusted full-state Lightning .ckpt
+  every_n_steps: 0 # 0 retains the default epoch checkpoint cadence
 img_size: 224
 embed_dim: 192
 history_size: 1

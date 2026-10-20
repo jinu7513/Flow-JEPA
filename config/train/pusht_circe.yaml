@@ -1,0 +1,23 @@
+# Single-GPU starting point. Increase batch size after checking GPU memory.
+defaults:
+  - fjepa
+  - _self_
+
+output_model_name: flow-jepa-pusht-circe
+subdir: flow-jepa-pusht-circe
+num_workers: 6
+
+checkpoint:
+  every_n_steps: 100
+
+loader:
+  batch_size: 8
+
+trainer:
+  devices: 1
+  precision: 16-mixed
+
+wandb:
+  config:
+    project: flow-jepa-pusht
+    save_dir: ${oc.env:FLOWJEPA_EXPERIMENT_DIR}

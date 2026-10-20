@@ -1,0 +1,17 @@
+# Windows laptop starting configuration for 6 GB VRAM.
+defaults:
+  - fjepa
+  - _self_
+
+output_model_name: flow-jepa-pusht-local
+subdir: flow-jepa-pusht-local
+num_workers: 0
+
+loader:
+  batch_size: 8
+  persistent_workers: false
+  prefetch_factor: null
+
+trainer:
+  devices: 1
+  precision: bf16-mixed
